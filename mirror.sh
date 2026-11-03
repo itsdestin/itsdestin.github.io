@@ -11,14 +11,16 @@ REPO="$SITE/repo"
 mkdir -p "$SITE"
 cp index.html README.md "$OUT/"
 : > "$OUT/.nojekyll"
-fetch() { mkdir -p "$(dirname "$SITE/$1")"; curl -fsS --retry 3 -o "$SITE/$1" "$NEW/$1"; }
+fetch() { mkdir -p "$(dirname "$SITE/$1")"; curl -fsS --retry 5 --retry-all-errors -o "$SITE/$1" "$NEW/$1"; }
 # 1. The signed Flatpak summary FIRST, then the objects: a release published in between can then only add objects.
 ostree init --repo="$REPO" --mode=archive-z2
 for f in config summary summary.sig summary.idx summary.idx.sig; do fetch "repo/$f"; done
 for digest in $(python3 summary-digests.py "$REPO/summary.idx"); do fetch "repo/summaries/$digest.gz"; done
 # 2. Every object the summary needs (content-addressed: identical bytes, and every commit is signed with our key).
 ostree --repo="$REPO" remote add --no-gpg-verify new "$NEW/repo/"
-ostree --repo="$REPO" pull --mirror new
+# WHY retries (2026-11-03): GitHub's website sometimes answers "busy, try later" (503) for a moment, and ostree gives up
+# at once. A failed run is harmless (the last good copy stays online) but leaves the copy an hour staler.
+for try in 1 2 3 4 5; do ostree --repo="$REPO" pull --mirror new && break; [ "$try" = 5 ] && exit 1; sleep $((try * 20)); done
 for f in config summary summary.sig summary.idx summary.idx.sig; do fetch "repo/$f"; done   # the published ones, not ostree's
 # 3. The native update lists (signed) and Fedora's repository metadata (signed repomd.xml).
 fetch arch/latest.json; fetch arch/latest.json.sig
