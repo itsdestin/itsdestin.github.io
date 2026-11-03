@@ -1,0 +1,31 @@
+# Keeps the old Swipe Keyboard update address (itsdestin.github.io/swipe-keyboard/) serving a current copy of the
+# OpenSwipe update site. Hourly, after every push, or by hand. Needs no secrets: it only reads the public site.
+name: Mirror the OpenSwipe update site at the old address
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -q && sudo apt-get install -y -q ostree python3-gi gir1.2-glib-2.0
+      - run: ./mirror.sh site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
