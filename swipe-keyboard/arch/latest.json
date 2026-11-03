@@ -1,0 +1,12 @@
+{
+ "schema": 1,
+ "package": "swipe-keyboard",
+ "version": "0.5.1-1",
+ "files": {
+  "x86_64": {
+   "url": "https://github.com/itsdestin/swipe-keyboard/releases/download/v0.5.1-1/swipe-keyboard-0.5.1-1-x86_64.pkg.tar.zst",
+   "sha256": "aa1c1ac0fc376ba4c763b0892284fd78eb55d27f1a4cffea6c04a42e82e0c030",
+   "size": 77473720
+  }
+ }
+}
